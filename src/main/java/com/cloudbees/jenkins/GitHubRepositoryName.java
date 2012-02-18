@@ -47,13 +47,34 @@ public class GitHubRepositoryName {
         return null;
     }
 
-    public final String host, userName, repositoryName;
+
+    public static GitHubRepositoryName create(final String url, final String branch) {
+        for (Pattern p : URL_PATTERNS) {
+            Matcher m = p.matcher(url);
+            if (m.matches())
+                return new GitHubRepositoryName(m.group(1), m.group(2),
+                        m.group(3),branch);
+        }
+        return null;
+    }
+
+
+    public final String host, userName, repositoryName, branch;
 
     public GitHubRepositoryName(String host, String userName, String repositoryName) {
         this.host = host;
         this.userName = userName;
         this.repositoryName = repositoryName;
+        this.branch = "";
     }
+
+    public GitHubRepositoryName(String host, String userName, String repositoryName, String branch) {
+        this.host = host;
+        this.userName = userName;
+        this.repositoryName = repositoryName;
+        this.branch = branch;
+    }
+
 
     public Iterable<GHRepository> resolve() {
         return new Iterable<GHRepository>() {

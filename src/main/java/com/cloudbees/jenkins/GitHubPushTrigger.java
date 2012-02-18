@@ -9,6 +9,7 @@ import hudson.model.Item;
 import hudson.model.AbstractProject;
 import hudson.model.Project;
 import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.BranchSpec;
 import hudson.scm.SCM;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
@@ -116,10 +117,11 @@ public class GitHubPushTrigger extends Trigger<AbstractProject> implements Runna
     protected void addRepositories(Set<GitHubRepositoryName> r, SCM scm) {
         if (scm instanceof GitSCM) {
             GitSCM git = (GitSCM) scm;
+            
             for (RemoteConfig rc : git.getRepositories()) {
                 for (URIish uri : rc.getURIs()) {
                     String url = uri.toString();
-                    GitHubRepositoryName repo = GitHubRepositoryName.create(url);
+                    GitHubRepositoryName repo = GitHubRepositoryName.create(url, git.getBranches().get(0).getName());
                     if (repo != null) {
                         r.add(repo);
                     }

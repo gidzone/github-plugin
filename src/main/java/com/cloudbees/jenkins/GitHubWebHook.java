@@ -150,7 +150,9 @@ public class GitHubWebHook implements UnprotectedRootAction {
         String repoUrl = repository.getString("url"); // something like 'https://github.com/kohsuke/foo'
         String repoName = repository.getString("name"); // 'foo' portion of the above URL
         String ownerName = repository.getJSONObject("owner").getString("name"); // 'kohsuke' portion of the above URL
-
+        String branch = o.getString("ref").replace("ref/heads/", ""); //'ref/heads/master' portion of the url above
+        
+        LOGGER.info(branch);
         LOGGER.info("Received POST for "+repoUrl);
         LOGGER.fine("Full details of the POST was "+o.toString());
         Matcher matcher = REPOSITORY_NAME_PATTERN.matcher(repoUrl);
@@ -161,7 +163,11 @@ public class GitHubWebHook implements UnprotectedRootAction {
             Authentication old = SecurityContextHolder.getContext().getAuthentication();
             SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
             try {
-                GitHubRepositoryName changedRepository = new GitHubRepositoryName(matcher.group(1), ownerName, repoName);
+
+                //passing the branch if pushed to a branch
+                GitHubRepositoryName changedRepository = 
+                    new GitHubRepositoryName(matcher.group(1), ownerName, repoName, branch!="master"?branch:"");
+                
                 for (AbstractProject<?,?> job : Hudson.getInstance().getAllItems(AbstractProject.class)) {
                     GitHubPushTrigger trigger = job.getTrigger(GitHubPushTrigger.class);
                     if (trigger!=null) {
@@ -169,7 +175,7 @@ public class GitHubWebHook implements UnprotectedRootAction {
                         if (trigger.getGitHubRepositories().contains(changedRepository))
                             trigger.onPost();
                         else
-                            LOGGER.fine("Skipped "+job.getFullDisplayName()+" because it doesn't have a matching repository.");
+                         LOGGER.fine("Skipped "+job.getFullDisplayName()+" because it doesn't have a matching repository.");
                     }
                 }
             } finally {
